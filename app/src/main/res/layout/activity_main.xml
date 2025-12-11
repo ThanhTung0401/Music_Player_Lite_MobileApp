@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?android:attr/colorBackground">
@@ -87,7 +88,8 @@
                     android:background="?selectableItemBackgroundBorderless"
                     android:contentDescription="Previous"
                     android:src="@drawable/ic_prev"
-                    app:tint="?attr/colorOnSurface" />
+                    app:tint="?attr/colorOnSurface"
+                    tools:ignore="HardcodedText" />
 
                 <ImageButton
                     android:id="@+id/btnPlay"
@@ -98,7 +100,8 @@
                     android:contentDescription="Play/Pause"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_play"
-                    app:tint="?attr/colorPrimary" />
+                    app:tint="?attr/colorPrimary"
+                    tools:ignore="HardcodedText" />
 
                 <ImageButton
                     android:id="@+id/btnNext"
@@ -107,7 +110,8 @@
                     android:background="?selectableItemBackgroundBorderless"
                     android:contentDescription="Next"
                     android:src="@drawable/ic_next"
-                    app:tint="?attr/colorOnSurface" />
+                    app:tint="?attr/colorOnSurface"
+                    tools:ignore="HardcodedText" />
             </LinearLayout>
         </RelativeLayout>
     </LinearLayout>
