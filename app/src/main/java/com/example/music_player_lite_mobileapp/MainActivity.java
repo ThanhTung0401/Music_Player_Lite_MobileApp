@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
     MusicService musicService;
     boolean isServiceBound = false;
 
-    TextView txtSongInfo;
+    TextView txtSongInfo, txtCurrentTime, txtTotalTime;
     ImageButton btnPlay, btnNext, btnPrev;
     SeekBar seekBar;
     Handler handler = new Handler();
@@ -50,6 +50,9 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         txtSongInfo = findViewById(R.id.txtSongInfo);
+        txtCurrentTime = findViewById(R.id.txtCurrentTime);
+        txtTotalTime = findViewById(R.id.txtTotalTime);
+
         btnPlay = findViewById(R.id.btnPlay);
         btnNext = findViewById(R.id.btnNext);
         btnPrev = findViewById(R.id.btnPrev);
@@ -64,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
         btnNext.setOnClickListener(v -> { if (isServiceBound) musicService.nextSong(); });
         btnPrev.setOnClickListener(v -> { if (isServiceBound) musicService.prevSong(); });
 
-        // Kéo thanh SeekBar để tua nhạc (Yêu cầu A3)
+        // Kéo thanh SeekBar để tua nhạc
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser && isServiceBound) musicService.seekTo(progress);
@@ -76,15 +79,20 @@ public class MainActivity extends AppCompatActivity {
         checkPermission();
         registerReceiver(uiReceiver, new IntentFilter("UPDATE_UI"), Context.RECEIVER_NOT_EXPORTED);
 
-        // Logic cập nhật SeekBar mỗi giây (Yêu cầu A3)
+        // Logic cập nhật SeekBar và mini player mỗi giây
         handler.post(new Runnable() {
             @Override public void run() {
                 if (isServiceBound) {
                     if (musicService.isPlaying()) {
                         seekBar.setMax(musicService.getDuration());
                         seekBar.setProgress(musicService.getCurrentPosition());
+                        // Cập nhật txtCurrentTime và txtTotalTime
+                        if (musicService.getCurrentSong() != null) {
+                            txtCurrentTime.setText(musicService.getCurrentSong().getCurrentTime(musicService.getCurrentPosition()));
+                            txtTotalTime.setText(musicService.getCurrentSong().getDuration());
+                        }
                     }
-                    updateMiniPlayer(); // Periodically update mini player
+                    updateMiniPlayer();
                 }
                 handler.postDelayed(this, 1000);
             }
@@ -107,7 +115,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadSongs() {
-        // Quét nhạc (Yêu cầu A1)
         ContentResolver contentResolver = getContentResolver();
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         Cursor cursor = contentResolver.query(uri, null, MediaStore.Audio.Media.IS_MUSIC + "!= 0", null, null);
@@ -116,11 +123,13 @@ public class MainActivity extends AppCompatActivity {
             int titleCol = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
             int artistCol = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
             int pathCol = cursor.getColumnIndex(MediaStore.Audio.Media.DATA);
+            int totalTimeCol = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
             do {
                 String title = cursor.getString(titleCol);
                 String artist = cursor.getString(artistCol);
                 String path = cursor.getString(pathCol);
-                songList.add(new Song(title, artist, path));
+                long totalTime = cursor.getLong(totalTimeCol);
+                songList.add(new Song(title, artist, path, totalTime));
             } while (cursor.moveToNext());
             cursor.close();
         }
@@ -150,7 +159,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override protected void onDestroy() {
+    @Override
+    protected void onDestroy() {
         super.onDestroy();
         if (isServiceBound) { unbindService(serviceConnection); isServiceBound = false; }
         unregisterReceiver(uiReceiver);
