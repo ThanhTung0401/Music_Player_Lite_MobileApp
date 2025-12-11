@@ -79,9 +79,12 @@ public class MainActivity extends AppCompatActivity {
         // Logic cập nhật SeekBar mỗi giây (Yêu cầu A3)
         handler.post(new Runnable() {
             @Override public void run() {
-                if (isServiceBound && musicService.isPlaying()) {
-                    seekBar.setMax(musicService.getDuration());
-                    seekBar.setProgress(musicService.getCurrentPosition());
+                if (isServiceBound) {
+                    if (musicService.isPlaying()) {
+                        seekBar.setMax(musicService.getDuration());
+                        seekBar.setProgress(musicService.getCurrentPosition());
+                    }
+                    updateMiniPlayer(); // Periodically update mini player
                 }
                 handler.postDelayed(this, 1000);
             }
@@ -136,7 +139,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateMiniPlayer() {
         if (isServiceBound && musicService.getCurrentSong() != null) {
-            txtSongInfo.setText(musicService.getCurrentSong().getTitle());
+            String path = musicService.getCurrentSong().getPath();
+            String filename = path.substring(path.lastIndexOf('/') + 1);
+            txtSongInfo.setText(filename);
             if (musicService.isPlaying()) {
                 btnPlay.setImageResource(android.R.drawable.ic_media_pause);
             } else {
