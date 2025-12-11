@@ -33,16 +33,19 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
         Song song = songList.get(position);
         holder.txtTitle.setText(song.getTitle());
         holder.txtArtist.setText(song.getArtist());
+        String duration=song.getDuration();
+        holder.txtDuration.setText(duration);
     }
 
     @Override public int getItemCount() { return songList.size(); }
 
     public static class SongViewHolder extends RecyclerView.ViewHolder {
-        TextView txtTitle, txtArtist;
+        TextView txtTitle, txtArtist,txtDuration;
         public SongViewHolder(@NonNull View itemView, final OnItemClickListener listener) {
             super(itemView);
             txtTitle = itemView.findViewById(R.id.txtTitle);
             txtArtist = itemView.findViewById(R.id.txtArtist);
+            txtDuration= itemView.findViewById(R.id.txtDuration);
             itemView.setOnClickListener(v -> {
                 if (listener != null) listener.onItemClick(getAdapterPosition());
             });

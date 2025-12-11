@@ -21,11 +21,13 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<Song> songList = new ArrayList<>();
     MusicService musicService;
     boolean isServiceBound = false;
+    private Handler handler = new Handler();
+    private Runnable updateTimeRunnable;
 
-    TextView txtSongInfo;
+
+    TextView txtSongInfo,txtSongDuration,txtSongCurrentTime;
     ImageButton btnPlay, btnNext, btnPrev;
     SeekBar seekBar;
-    Handler handler = new Handler();
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
@@ -50,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         txtSongInfo = findViewById(R.id.txtSongInfo);
+        txtSongDuration = findViewById(R.id.txtTotalTime);
+
         btnPlay = findViewById(R.id.btnPlay);
         btnNext = findViewById(R.id.btnNext);
         btnPrev = findViewById(R.id.btnPrev);
@@ -57,8 +61,16 @@ public class MainActivity extends AppCompatActivity {
 
         btnPlay.setOnClickListener(v -> {
             if (isServiceBound) {
-                if (musicService.isPlaying()) musicService.pauseSong();
-                else musicService.resumeSong();
+                if (musicService.isPlaying())
+                {
+                    musicService.pauseSong();
+                    btnPlay.setImageResource(R.drawable.ic_play);
+                }
+                else
+                {
+                    musicService.resumeSong();
+                    btnPlay.setImageResource(R.drawable.ic_pause);
+                }
             }
         });
         btnNext.setOnClickListener(v -> { if (isServiceBound) musicService.nextSong(); });
@@ -113,11 +125,13 @@ public class MainActivity extends AppCompatActivity {
             int titleCol = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
             int artistCol = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
             int pathCol = cursor.getColumnIndex(MediaStore.Audio.Media.DATA);
+            int totalTimeCol= cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
             do {
                 String title = cursor.getString(titleCol);
                 String artist = cursor.getString(artistCol);
                 String path = cursor.getString(pathCol);
-                songList.add(new Song(title, artist, path));
+                Long totalTime= cursor.getLong(totalTimeCol);
+                songList.add(new Song(title, artist, path, totalTime));
             } while (cursor.moveToNext());
             cursor.close();
         }
@@ -130,7 +144,36 @@ public class MainActivity extends AppCompatActivity {
         startService(intent);
 
         adapter.setOnItemClickListener(position -> {
-            if (isServiceBound) musicService.playSong(position);
+            if (isServiceBound)
+            {
+                musicService.playSong(position);
+
+                TextView songName=findViewById(R.id.txtSongInfo);
+                songName.setText(songList.get(position).getTitle());
+
+                TextView songDuration=findViewById(R.id.txtTotalTime);
+                songDuration.setText(songList.get(position).getDuration());
+
+                TextView songCurrentTime=findViewById(R.id.txtCurrentTime);
+
+                ImageView playButton=findViewById(R.id.btnPlay);
+                playButton.setImageResource(R.drawable.ic_pause);
+
+                updateTimeRunnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        if (musicService != null && musicService.isPlaying()) {
+                            int currentPos = musicService.getCurrentPosition();
+                            String currentTime = songList.get(position).getCurrentTime(currentPos);
+                            songCurrentTime.setText(currentTime);
+                        }
+
+                        handler.postDelayed(this, 1000); // 0.5s cập nhật 1 lần
+                    }
+                };
+
+                handler.post(updateTimeRunnable);
+            }
         });
     }
 
